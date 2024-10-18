@@ -6,7 +6,7 @@
 
 It is recommended to install [ATA 1.9 Update 3](https://learn.microsoft.com/en-us/advanced-threat-analytics/ata-update-1.9.3-migration-guide) before proceeding. All information about planning, software requirements, upgrade paths, deployments, and usages is available on [Microsoft Learn](https://learn.microsoft.com/en-us/advanced-threat-analytics/what-is-ata).
 
-Also, please stop the "Microsoft Advanced Threat Analytics Center" service and backup **EVERYTHING** inside the "Backup" folder. By default, it is located in this path.
+Also, stop the "Microsoft Advanced Threat Analytics Center" service and backup **EVERYTHING** inside the "Backup" folder. By default, it is located in this path.
 
 ```cmd
 C:\Program Files\Microsoft Advanced Threat Analytics\Center
@@ -17,7 +17,7 @@ C:\Program Files\Microsoft Advanced Threat Analytics\Center
 ### 1. Looking for backup files
 
 I first thought that Microsoft ATA is written in C# of the .NET 4 family (maybe .NET 4.6.1). However, it is hard to determine which file defines port configuration, so I found out just by taking a look at the files in the "Backup" folder.
-There is an exciting key in those backup files under JSON.
+There is an notable key in those backup files under JSON.
 
 ```json
 "CenterWebApplicationConfiguration": {
@@ -51,7 +51,7 @@ I have changed the port for both to "8080", then re-import into the ATA Mongo DB
 mongoimport.exe --db ATA --collection SystemProfile --file "<SystemProfile.json backup file>" --upsert
 ```
 
-However, when I restart the service, it seems nothing is running. That leads me to another conclusion: the port configuration is either in another configuration file or is being fixed and cannot be changed by editing the existing setting file.
+However, when I restart the service, it seems nothing is running. That leads me to another conclusion: *The port configuration is either in another configuration file or is being constant and cannot be changed by editing the existing setting file.*
 
 ### 2. Reverse engineering ATA
 
@@ -84,14 +84,9 @@ I messed up with it a bit, waiting for it to return an error, and this happened:
  at Microsoft.Tri.Infrastructure.Framework.Service.OnStart(String[] args)
 ```
 
-At that point, I can say that the configurations, including the web port.
+At that point, I can say that the configurations, including the web port, is under the `Microsoft.Tri` namespaces.
 
-Copying all `Microsoft.Tri.*` into another computer for debugging, then use dnSpy to find variables, constants, and functions that match these names:
-
-- `port`
-- `443`
-- `http`
-- `export`
+Copying all `Microsoft.Tri.*` into another computer for debugging, then use [dnSpy](https://github.com/dnSpy/dnSpy) to find variables, constants, and functions that match these names: `port`, `443`, `http`, `export`
 
 After searching for many results, I found that `Microsoft.Tri.Infrastructure.Utils.HttpHelper` has a function call.
 
@@ -157,7 +152,7 @@ After that, look up `ServiceListeningIpEndpoint` and `ServiceEndpoints` and edit
 
 > Note:
 >
-> If you search for port 443 and replace everything words that match then replace it, please exclude `ServiceEndpoints` as the value `Address` of `ti.ata.azure.com` because this is the proxy service and doesn't relate to the usage of local ports.
+> If you search for port 443 and replace everything words that match then replace it, **exclude** `ServiceEndpoints` as the value `Address` of `ti.ata.azure.com` because this is the proxy service and doesn't relate to the usage of local ports.
 >
 > ![](./img/excludes_this_item.png)
 
@@ -169,7 +164,7 @@ Once the configuration is completed, it is ready to be imported into the ATA, fo
 .\mongo.exe ATA
 ```
 
-3. In the Powershell command line interface, run this command to remove the current system profile and exit
+3. In the Mongo DB command line interface, run this command to remove the current system profile and exit
 
 ```mongo
 db.SystemProfile.remove({})
