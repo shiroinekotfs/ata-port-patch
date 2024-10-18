@@ -1,8 +1,6 @@
 # Part 2 - Patching ATA
 
 > This document is written by [Vo Luu Tuong Anh](https://github.com/anhvlt-2k6), a first-year student of Software Engineering at FPT University.
->
-> Note that these guides only apply to ATA 1.9 versions
 
 ## Recommendations before patching
 
